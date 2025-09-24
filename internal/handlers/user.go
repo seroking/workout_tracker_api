@@ -61,6 +61,16 @@ func GetUser(c *gin.Context, db *gorm.DB) {
 	}
 
 	c.JSON(200, gin.H{"message": "User retrieved successfully", "data": user})
+}
+
+func ListUsers(c *gin.Context, db *gorm.DB) {
+	var users []models.User
+
+	if err := db.Find(&users).Error; err != nil {
+		c.JSON(500, gin.H{"error": "Failed to retrieve users"})
+		return
+	}
+	c.JSON(200, gin.H{"message": "Users retrieved successfully"})
 
 }
 
@@ -74,4 +84,46 @@ func DeleteUser(c *gin.Context, db *gorm.DB) {
 	}
 
 	c.JSON(200, gin.H{"message": "User deleted sucessfully"})
+}
+
+type UpdateData struct{
+	Username string	`json:"username"`
+	Email string		`json:"email"`
+	Password string	`json:"password"`
+}
+
+func UpdateUser(c *gin.Context, db *gorm.DB) {
+	var input UpdateData
+	var user models.User
+	id := c.Param("id")
+
+	if err := db.First(&user, id).Error; err != nil{
+		c.JSON(404, gin.H{"error": "User not found"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&input);err!=nil{
+		c.JSON(500, gin.H{"error": err.Error()}
+		return
+	}
+
+	var updates = map[string]interface{}{
+		"username": input.Username,
+		"email": input.Email,
+	}
+	if input.Password != ""{
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), DefaultCost)
+		if err != nil{
+			c.JSON(500, gin.H{"error": "failed to generate password hash"})
+			return
+		}
+		updates["password"] = string(hashedPassword)
+		db.Models(&user).updates(&user)
+	}
+
+
+
+	c.JSON(200,gin.H{"message": "User updated sucessfully"})
+
+	 
 }
