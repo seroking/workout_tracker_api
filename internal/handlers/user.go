@@ -11,7 +11,7 @@ import (
 type CreateData struct {
 	Username string `json:"username" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,password"`
+	Password string `json:"password" binding:"required,min=8"`
 }
 
 func CreateUser(c *gin.Context, db *gorm.DB) {
@@ -70,7 +70,7 @@ func ListUsers(c *gin.Context, db *gorm.DB) {
 		c.JSON(500, gin.H{"error": "Failed to retrieve users"})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Users retrieved successfully"})
+	c.JSON(200, gin.H{"message": "Users retrieved successfully", "data": users})
 
 }
 
@@ -82,48 +82,53 @@ func DeleteUser(c *gin.Context, db *gorm.DB) {
 		c.JSON(404, gin.H{"error": "User Not Found"})
 		return
 	}
+	if err := db.Delete(&user).Error; err != nil {
+		c.JSON(400, gin.H{"error": "Failed to delete user"})
+		return
+	}
 
 	c.JSON(200, gin.H{"message": "User deleted sucessfully"})
 }
 
-type UpdateData struct{
-	Username string	`json:"username"`
-	Email string		`json:"email"`
-	Password string	`json:"password"`
+type UpdateInput struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func UpdateUser(c *gin.Context, db *gorm.DB) {
-	var input UpdateData
+	var Input UpdateInput
 	var user models.User
 	id := c.Param("id")
+	if err := db.First(&user, id).Error; err != nil {
+		c.JSON(404, gin.H{"error": "User Not Found"})
+	}
 
-	if err := db.First(&user, id).Error; err != nil{
+	if err := db.First(&user, id).Error; err != nil {
 		c.JSON(404, gin.H{"error": "User not found"})
 		return
 	}
 
-	if err := c.ShouldBindJSON(&input);err!=nil{
-		c.JSON(500, gin.H{"error": err.Error()}
+	if err := c.ShouldBindJSON(&Input); err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-
 	var updates = map[string]interface{}{
-		"username": input.Username,
-		"email": input.Email,
+		"username": Input.Username,
+		"email":    Input.Email,
 	}
-	if input.Password != ""{
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), DefaultCost)
-		if err != nil{
+	if Input.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(Input.Password), bcrypt.DefaultCost)
+		if err != nil {
 			c.JSON(500, gin.H{"error": "failed to generate password hash"})
 			return
 		}
 		updates["password"] = string(hashedPassword)
-		db.Models(&user).updates(&user)
+	}
+	if err := db.Model(&user).Updates(updates).Error; err != nil {
+		c.JSON(400, gin.H{"error": "Failed to update user"})
+		return
 	}
 
-
-
-	c.JSON(200,gin.H{"message": "User updated sucessfully"})
-
-	 
+	c.JSON(200, gin.H{"message": "User updated sucessfully"})
 }
