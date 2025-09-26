@@ -8,13 +8,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type CreateData struct {
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=8"`
-}
-
 func CreateUser(c *gin.Context, db *gorm.DB) {
+	type CreateData struct {
+		Username string `json:"username" binding:"required"`
+		Email    string `json:"email" binding:"required,email"`
+		Password string `json:"password" binding:"required,min=8"`
+	}
 	var input CreateData
 	var UserExistCheck models.User
 
@@ -90,13 +89,12 @@ func DeleteUser(c *gin.Context, db *gorm.DB) {
 	c.JSON(200, gin.H{"message": "User deleted sucessfully"})
 }
 
-type UpdateInput struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 func UpdateUser(c *gin.Context, db *gorm.DB) {
+	type UpdateInput struct {
+		Username string `json:"username"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
 	var Input UpdateInput
 	var user models.User
 	id := c.Param("id")
