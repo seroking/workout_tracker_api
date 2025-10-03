@@ -32,7 +32,7 @@ func CreateExercice(c *gin.Context, db gorm.DB) {
 	}
 
 	if err := db.Create(&exercice).Error; err != nil {
-		c.JSON(400, gin.H{"error": "faied to create exercice"})
+		c.JSON(400, gin.H{"error": "failed to create exercice"})
 		return
 	}
 
