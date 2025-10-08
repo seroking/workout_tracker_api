@@ -39,7 +39,7 @@ func GetWorkoutSession(c *gin.Context, db *gorm.DB) {
 	id := c.Param("id")
 	var workoutSession models.WorkoutSession
 
-	if err := db.First(&workoutSession, id).Error; err != nil {
+	if err := db.Preload("WorkoutPlan.WorkoutExercices.Exercice.Category").First(&workoutSession, id).Error; err != nil {
 		c.JSON(404, gin.H{"error": "Workout session not found"})
 		return
 	}
@@ -50,7 +50,7 @@ func GetWorkoutSession(c *gin.Context, db *gorm.DB) {
 func ListWorkoutSessions(c *gin.Context, db *gorm.DB) {
 	var workoutSessions []models.WorkoutSession
 
-	if err := db.Find(&workoutSessions).Error; err != nil {
+	if err := db.Preload("WorkoutPlan").Find(&workoutSessions).Error; err != nil {
 		c.JSON(400, gin.H{"error": "Failed to retrieve workout sessions"})
 		return
 	}

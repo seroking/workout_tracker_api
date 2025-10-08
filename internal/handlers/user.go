@@ -54,7 +54,7 @@ func GetUser(c *gin.Context, db *gorm.DB) {
 	var user models.User
 	id := c.Param("id")
 
-	if err := db.First(&user, id).Error; err != nil {
+	if err := db.Preload("WorkoutPlans.WorkoutExercices").First(&user, id).Error; err != nil {
 		c.JSON(404, gin.H{"error": "User not found"})
 		return
 	}
@@ -65,7 +65,7 @@ func GetUser(c *gin.Context, db *gorm.DB) {
 func ListUsers(c *gin.Context, db *gorm.DB) {
 	var users []models.User
 
-	if err := db.Find(&users).Error; err != nil {
+	if err := db.Preload("WorkoutPlans").Find(&users).Error; err != nil {
 		c.JSON(500, gin.H{"error": "Failed to retrieve users"})
 		return
 	}

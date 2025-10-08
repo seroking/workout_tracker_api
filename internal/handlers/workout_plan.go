@@ -20,7 +20,7 @@ func CreateWorkoutPlan(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	if err := db.Where("name = ? AND user_id = ?", input.Name, input.UserID).First(&checkDataExist).Error; err != nil {
+	if err := db.Where("name = ? AND user_id = ?", input.Name, input.UserID).First(&checkDataExist).Error; err == nil {
 		c.JSON(409, gin.H{"error": "Workout Plan already exist"})
 		return
 	}
@@ -41,7 +41,7 @@ func GetWorkoutPlan(c *gin.Context, db *gorm.DB) {
 	id := c.Param("id")
 	var workoutPlan models.WorkoutPlan
 
-	if err := db.First(&workoutPlan, id).Error; err != nil {
+	if err := db.Preload("WorkoutExercices.Exercice.Category").First(&workoutPlan, id).Error; err != nil {
 		c.JSON(404, gin.H{"error": "Workout plan not found"})
 		return
 	}
@@ -51,7 +51,7 @@ func GetWorkoutPlan(c *gin.Context, db *gorm.DB) {
 func ListWorkoutPlan(c *gin.Context, db *gorm.DB) {
 	var workoutPlans []models.WorkoutPlan
 
-	if err := db.Find(&workoutPlans).Error; err != nil {
+	if err := db.Preload("User").Find(&workoutPlans).Error; err != nil {
 		c.JSON(404, gin.H{"error": "failed to retrieve workout plans"})
 		return
 	}
@@ -100,7 +100,7 @@ func UpdateWorkoutPlan(c *gin.Context, db *gorm.DB) {
 		"description": input.Description,
 	}
 
-	if err := db.Model(&workoutPlan).Updates(updates); err != nil {
+	if err := db.Model(&workoutPlan).Updates(updates).Error; err != nil {
 		c.JSON(400, gin.H{"error": "Failed to update workout plan"})
 		return
 	}

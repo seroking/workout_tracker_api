@@ -38,17 +38,17 @@ func GetSchedule(c *gin.Context, db *gorm.DB) {
 	var id = c.Param("id")
 	var schedule models.Schedule
 
-	if err := db.First(&schedule, id).Error; err != nil {
+	if err := db.Preload("WorkoutPlan.WorkoutExercices.Exercice.Category").First(&schedule, id).Error; err != nil {
 		c.JSON(404, gin.H{"error": "Schedule not found"})
 		return
 	}
 	c.JSON(200, gin.H{"message": "Schedule retrieved successfully", "data": schedule})
 }
 
-func ListSchedule(c *gin.Context, db *gorm.DB) {
+func ListSchedules(c *gin.Context, db *gorm.DB) {
 	var schedules []models.Schedule
 
-	if err := db.Find(&schedules).Error; err != nil {
+	if err := db.Preload("WorkoutPlan").Find(&schedules).Error; err != nil {
 		c.JSON(404, gin.H{"error": "Schedules not found"})
 		return
 	}
